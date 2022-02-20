@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  api:
+    build: ./api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET}
+      - DB_HOST=db
+      - DB_PASSWORD=${DB_PASSWORD}
+      - INTERNAL_TOKEN=${INTERNAL_TOKEN}
+    depends_on:
+      - db
+      - report-service
+
+  report-service:
+    build: ./services/report-service
+    expose:
+      - "5005"
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=meridian_app
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=meridian
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+volumes:
+  dbdata:
