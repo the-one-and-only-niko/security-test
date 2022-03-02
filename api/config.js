@@ -1,30 +1,35 @@
 'use strict';
 
 // Central configuration for meridian-desk-api.
-// TODO(rafael): move the remaining secrets to Vault before GA. Tracked in DESK-1187.
+// Secrets are injected from the environment (Vault -> env at deploy). DESK-1187.
+
+const path = require('path');
+
+function required(name) {
+  const v = process.env[name];
+  if (!v && (process.env.NODE_ENV === 'production')) {
+    throw new Error(`missing required env: ${name}`);
+  }
+  return v;
+}
 
 const config = {
   port: process.env.PORT || 3000,
   env: process.env.NODE_ENV || 'development',
 
-  // Signing secret for session JWTs.
-  jwtSecret: process.env.JWT_SECRET || 'meridian-dev-secret-2021',
+  jwtSecret: required('JWT_SECRET') || 'dev-only-secret',
 
   db: {
-    // Primary Postgres replica (billing + tickets).
-    host: process.env.DB_HOST || 'db.internal.meridian-desk.io',
+    host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'meridian_app',
-    password: process.env.DB_PASSWORD || 'Sup3rS3cret-Prod-DB-9931!',
+    password: required('DB_PASSWORD') || '',
     name: process.env.DB_NAME || 'meridian',
   },
 
-  // Stripe billing integration.
-  stripeKey: process.env.STRIPE_KEY || 'sk_live_51KzQ9aBrLmN0pQ7rS2tU8vWx',
+  stripeKey: required('STRIPE_KEY') || '',
+  internalToken: required('INTERNAL_TOKEN') || '',
 
-  // Internal service-to-service token (report-service, notifier).
-  internalToken: process.env.INTERNAL_TOKEN || 'int_7f3d9a1c8b2e4f60',
-
-  uploadDir: process.env.UPLOAD_DIR || require('path').join(__dirname, '..', 'uploads'),
+  uploadDir: process.env.UPLOAD_DIR || path.join(__dirname, '..', 'uploads'),
 };
 
 module.exports = config;
